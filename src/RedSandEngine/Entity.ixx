@@ -98,4 +98,35 @@ export namespace rse
 		std::map<Entity, uint64_t> _indices;
 	};
 
+	template<class T>
+	class HashStore : public EntityComponentStore<T>
+	{
+	public:
+		void reserve(Entity entity) override
+		{
+			if (_components.count(entity) > 0)
+				return;
+			_components.insert({ entity, T{ } });
+		}
+
+		void unreserve(Entity entity) override
+		{
+			if (_components.count(entity) == 0)
+				return;
+			_components.erase(entity);
+		}
+
+		void set(Entity entity, const T& value) override
+		{
+			_components[entity] = value;
+		}
+
+		T get(Entity entity) const override
+		{
+			return _components.at(entity);
+		}
+
+	private:
+		std::map<Entity, T> _components;
+	};
 }

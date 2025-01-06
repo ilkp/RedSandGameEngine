@@ -86,6 +86,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Entity.ixx" />
+    <ClCompile Include="Input.ixx" />
+    <ClCompile Include="RseContext.cpp" />
+    <ClCompile Include="RseContext.ixx" />
     <ClCompile Include="RedSandEngine.ixx" />
     <ClCompile Include="Render.ixx" />
     <ClCompile Include="RseTypes.ixx" />

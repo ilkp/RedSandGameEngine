@@ -73,6 +73,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
+	rse::rseContext().onSdlAppIterate(appstate);
+	Key key = rseContext().getKey(SDLK_W);
+
 	RedSandGame* game = static_cast<RedSandGame*>(appstate);
 	SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(game->renderer);
@@ -89,7 +92,8 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 		*game->renderer,
 		game->cameraStore.get(game->camera),
 		game->meshStore.get(game->mesh),
-		{ transform, transform2 });
+		{ transform, transform2 }
+	);
 
 	SDL_RenderPresent(game->renderer);
 	return SDL_AppResult::SDL_APP_CONTINUE;
@@ -97,15 +101,12 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 {
+	rseContext().onSdlAppEvent(appstate, event);
 	switch (event->type)
 	{
 	case SDL_EventType::SDL_EVENT_QUIT:
 	{
 		return SDL_APP_SUCCESS;
-	}
-	case SDL_EventType::SDL_EVENT_KEY_DOWN:
-	{
-		event->key.key
 	}
 	}
 	return SDL_AppResult::SDL_APP_CONTINUE;
