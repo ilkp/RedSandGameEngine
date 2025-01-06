@@ -6,18 +6,7 @@ namespace rse
 {
 	void RseContext::onSdlAppIterate(void* appstate)
 	{
-		auto& current = _keyMap.current();
-		auto& previous = _keyMap.previous();
-		std::map<SDL_Keycode, Key> tempKeys{};
-		std::swap(tempKeys, previous);
-		if (tempKeys.size() > 0)
-			int x = 6;
-		for (auto& [keycode, key] : current)
-		{
-			if (tempKeys.count(keycode) > 0 && tempKeys[keycode].keyDirection == key.keyDirection)
-				key.keyStatus = KeyStatus::directionHeld;
-			previous.insert({ keycode, Key{ .keyDirection = key.keyDirection, .keyStatus = key.keyStatus } });
-		}
+		updateKeyMaps();
 	}
 
 	void RseContext::onSdlAppInit(void** appstate, int argc, char* argv[])
@@ -26,7 +15,6 @@ namespace rse
 
 	void RseContext::onSdlAppEvent(void* appstate, SDL_Event* event)
 	{
-		//std::cout << "app event" << std::endl;
 		switch (event->type)
 		{
 		case SDL_EventType::SDL_EVENT_KEY_DOWN:
@@ -59,13 +47,27 @@ namespace rse
 	{
 		const auto& current = _keyMap.current();
 		if (current.count(keycode) == 0)
-			return Key{ .keyDirection = KeyDirection::up, .keyStatus = KeyStatus::directionHeld };
+			return Key{ .direction = KeyDirection::up, .status = KeyStatus::held };
 		return current.at(keycode);
+	}
+
+	void RseContext::updateKeyMaps()
+	{
+		auto& current = _keyMap.current();
+		auto& previous = _keyMap.previous();
+		std::map<SDL_Keycode, Key> tempKeys{};
+		std::swap(tempKeys, previous);
+		for (auto& [keycode, key] : current)
+		{
+			if (tempKeys.count(keycode) > 0 && tempKeys[keycode].direction == key.direction)
+				key.status = KeyStatus::held;
+			previous.insert({ keycode, Key{.direction = key.direction, .status = key.status } });
+		}
 	}
 
 	void RseContext::updateKey(SDL_Keycode keycode, KeyDirection direction)
 	{
-		_keyMap.current()[keycode] = { .keyDirection = direction, .keyStatus = KeyStatus::directionBegin };
+		_keyMap.current()[keycode] = { .direction = direction, .status = KeyStatus::begin };
 	}
 
 	RseContext& rseContext()

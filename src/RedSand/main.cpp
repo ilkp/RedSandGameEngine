@@ -74,7 +74,6 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
 	rse::rseContext().onSdlAppIterate(appstate);
-	Key key = rseContext().getKey(SDLK_W);
 
 	RedSandGame* game = static_cast<RedSandGame*>(appstate);
 	SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);

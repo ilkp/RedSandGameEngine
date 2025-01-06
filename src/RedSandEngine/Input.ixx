@@ -13,13 +13,13 @@ export namespace rse
 
 	enum class KeyStatus
 	{
-		directionBegin,
-		directionHeld
+		begin,
+		held
 	};
 
 	struct Key
 	{
-		KeyDirection keyDirection;
-		KeyStatus keyStatus;
+		KeyDirection direction;
+		KeyStatus status;
 	};
 }

@@ -30,6 +30,7 @@ export namespace rse
 
 		KeyMap _keyMap;
 
+		void updateKeyMaps();
 		void updateKey(SDL_Keycode keycode, KeyDirection direction);
 	};
 
