@@ -1,8 +1,9 @@
 module;
-#include <cstdint>
-#include <vector>
-#include <map>
 export module RedSandEngine:Entity;
+
+import <cstdint>;
+import <vector>;
+import <map>;
 
 export namespace rse
 {

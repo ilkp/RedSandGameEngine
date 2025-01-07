@@ -1,78 +1,69 @@
 module;
-#include <iostream>
+#include <algorithm>
 module RedSandEngine:RseContext;
+
+import :RseTypes;
+import :Input;
 
 namespace rse
 {
-	void RseContext::onSdlAppIterate(void* appstate)
+	RseContext::RseContext()
 	{
-		updateKeyMaps();
+	}
+
+	uint64_t RseContext::addSdlEventCallback(SDL_EventType event, OnSdlEvent onSdlEvent)
+	{
+		if (_sdlEventCallbacks.count(event) == 0)
+			_sdlEventCallbacks[event] = {};
+		_sdlEventCallbacks[event].insert({ _sdlCallbackId++, std::move(onSdlEvent) });
+		return _sdlCallbackId;
+	}
+
+	bool RseContext::removeSdlEventCallback(SDL_EventType event, int callbackId)
+	{
+		if (_sdlEventCallbacks.count(event) > 0 && _sdlEventCallbacks[event].count(callbackId) > 0)
+		{
+			_sdlEventCallbacks[event].erase(callbackId);
+			return true;
+		}
+		return false;
+	}
+
+	uint64_t RseContext::addSdlIterateCallback(OnSdlIterate onSdlIterate)
+	{
+		_sdlIterateCallbacks.insert({ _sdlCallbackId++, std::move(onSdlIterate) });
+		return _sdlCallbackId;
 	}
 
 	void RseContext::onSdlAppInit(void** appstate, int argc, char* argv[])
 	{
 	}
 
+	bool RseContext::removeSdlIterateCallback(int callbackId)
+	{
+		if (_sdlIterateCallbacks.count(callbackId) > 0)
+		{
+			_sdlIterateCallbacks.erase(callbackId);
+			return true;
+		}
+		return false;
+	}
+
+	void RseContext::onSdlAppIterate(void* appstate)
+	{
+		for (const auto& [id, callback] : _sdlIterateCallbacks)
+			callback();
+	}
+
 	void RseContext::onSdlAppEvent(void* appstate, SDL_Event* event)
 	{
-		switch (event->type)
-		{
-		case SDL_EventType::SDL_EVENT_KEY_DOWN:
-		{
-			updateKey(event->key.key, KeyDirection::down);
-			break;
-		}
-		case SDL_EventType::SDL_EVENT_KEY_UP:
-		{
-			updateKey(event->key.key, KeyDirection::up);
-			break;
-		}
-		case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_DOWN:
-		{
-			break;
-		}
-		case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_UP:
-		{
-
-			break;
-		}
-		}
+		const SDL_EventType eventType = static_cast<SDL_EventType>(event->type);
+		if (_sdlEventCallbacks.count(eventType) > 0)
+			for (const auto& [id, callback] : _sdlEventCallbacks.at(eventType))
+				callback(event);
 	}
 
 	void RseContext::onSdlAppQuit(void* appstate, SDL_AppResult result)
 	{
-	}
-
-	Key RseContext::getKey(SDL_Keycode keycode)
-	{
-		const auto& current = _keyMap.current();
-		if (current.count(keycode) == 0)
-			return Key{ .direction = KeyDirection::up, .status = KeyStatus::held };
-		return current.at(keycode);
-	}
-
-	void RseContext::updateKeyMaps()
-	{
-		auto& current = _keyMap.current();
-		auto& previous = _keyMap.previous();
-		std::map<SDL_Keycode, Key> tempKeys{};
-		std::swap(tempKeys, previous);
-		for (auto& [keycode, key] : current)
-		{
-			if (tempKeys.count(keycode) > 0 && tempKeys[keycode].direction == key.direction)
-				key.status = KeyStatus::held;
-			previous.insert({ keycode, Key{.direction = key.direction, .status = key.status } });
-		}
-	}
-
-	void RseContext::updateKey(SDL_Keycode keycode, KeyDirection direction)
-	{
-		_keyMap.current()[keycode] = { .direction = direction, .status = KeyStatus::begin };
-	}
-
-	RseContext& rseContext()
-	{
-		static RseContext rseContext;
-		return rseContext;
 	}
 }

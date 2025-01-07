@@ -6,8 +6,3 @@ export import :RseTypes;
 export import :Entity;
 export import :Render;
 export import :Input;
-
-export namespace rse
-{
-
-}

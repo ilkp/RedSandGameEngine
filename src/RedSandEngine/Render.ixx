@@ -3,10 +3,12 @@ module;
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <vector>
 export module RedSandEngine:Render;
+
 import :RseTypes;
 import :Entity;
+
+import <vector>;
 
 export namespace rse
 {
@@ -31,7 +33,7 @@ export namespace rse
 		}
 		for (const Transform& transform : transforms)
 		{
-			const glm::mat4 modelViewMatrix = camera.view * transform.translation * glm::mat4_cast(transform.quaternion) * transform.scale;
+			const glm::mat4 modelViewMatrix = camera.view * transform.position * glm::mat4_cast(transform.quaternion) * transform.scale;
 			for (size_t i = 0; i < mesh.vertices.size(); ++i)
 			{
 				const glm::vec3 projectedPosition = glm::project(

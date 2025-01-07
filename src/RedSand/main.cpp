@@ -31,6 +31,10 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 	game->camera = game->entityManager.next();
 	game->mesh = game->entityManager.next();
 
+	Transform cameraTransform;
+	cameraTransform.setPosition(0, 0, 50);
+	game->transformStore.set(game->camera, cameraTransform);
+
 	Camera camera;
 	camera.viewport = glm::vec4(0.0f, 0.0f, game->width, game->height);
 	camera.projection = glm::perspective(
@@ -38,10 +42,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 		(float)game->width / game->height,
 		0.1f,
 		100.0f);
-	camera.view = glm::lookAt(
-		glm::vec3(0.0f, 0.0f, -50.0f),
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f));
+	camera.applyTransform(cameraTransform);
 	game->cameraStore.set(game->camera, camera);
 
 	Mesh mesh;
@@ -52,17 +53,11 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 	game->meshStore.set(game->mesh, mesh);
 
 	Transform transform;
-	transform.scale = glm::mat4(1.0f);
-	transform.translation = glm::mat4(1.0f);
-	transform.translation[3][0] -= 10;
-	transform.quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	transform.setPosition(-10, 0, 0);
 	game->transformStore.set(game->mesh, transform);
 
 	Transform transform2;
-	transform2.scale = glm::mat4(1.0f);
-	transform2.translation = glm::mat4(1.0f);
-	transform2.translation[3][0] += 10;
-	transform2.quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	transform2.setPosition(10, 0, 0);
 	game->transformStore.set(game->mesh2, transform2);
 
 	if (!SDL_CreateWindowAndRenderer("RedSandGame", game->width, game->height, 0, &game->window, &game->renderer))
@@ -73,19 +68,32 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
-	rse::rseContext().onSdlAppIterate(appstate);
+	RseContext::instance().onSdlAppIterate(appstate);
+	Key w = Input::instance().getKey(SDLK_W);
+	Key a = Input::instance().getKey(SDLK_A);
+	Key s = Input::instance().getKey(SDLK_S);
+	Key d = Input::instance().getKey(SDLK_D);
 
 	RedSandGame* game = static_cast<RedSandGame*>(appstate);
+
+	Transform cameraTransform = game->transformStore.get(game->camera);
+	cameraTransform.rotate(0.001f, glm::vec3(0, 1, 0));
+	game->transformStore.set(game->camera, cameraTransform);
+
+	Camera camera = game->cameraStore.get(game->camera);
+	camera.applyTransform(cameraTransform);
+	game->cameraStore.set(game->camera, camera);
+
 	SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(game->renderer);
 
 	Transform transform = game->transformStore.get(game->mesh);
-	transform.quaternion = glm::rotate(transform.quaternion, 0.0001f, glm::vec3(1, 0, 0));
-	game->transformStore.set(game->mesh, transform);
+	//transform.quaternion = glm::rotate(transform.quaternion, 0.0001f, glm::vec3(1, 0, 0));
+	//game->transformStore.set(game->mesh, transform);
 
 	Transform transform2 = game->transformStore.get(game->mesh2);
-	transform2.quaternion = glm::rotate(transform2.quaternion, 0.0001f, glm::vec3(0, 1, 0));
-	game->transformStore.set(game->mesh2, transform2);
+	//transform2.quaternion = glm::rotate(transform2.quaternion, 0.0001f, glm::vec3(0, 1, 0));
+	//game->transformStore.set(game->mesh2, transform2);
 
 	drawMesh(
 		*game->renderer,
@@ -100,7 +108,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 {
-	rseContext().onSdlAppEvent(appstate, event);
+	RseContext::instance().onSdlAppEvent(appstate, event);
 	switch (event->type)
 	{
 	case SDL_EventType::SDL_EVENT_QUIT:
@@ -113,6 +121,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
+	RseContext::instance().onSdlAppQuit(appstate, result);
 	if (appstate != nullptr)
 	{
 		RedSandGame* game = static_cast<RedSandGame*>(appstate);
