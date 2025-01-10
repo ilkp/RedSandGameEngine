@@ -110,6 +110,11 @@ export namespace rse
 		{
 			quaternion = glm::rotate(quaternion, angle, axis);
 		}
+
+		glm::vec3 forward() const
+		{
+			return quaternion * glm::vec3(0, 0, 1);
+		}
 	};
 
 	struct Camera
@@ -123,9 +128,10 @@ export namespace rse
 			const glm::mat4 model = transform.position * glm::mat4_cast(transform.quaternion) * transform.scale;
 			const glm::mat4 tmodel = glm::transpose(model);
 			const glm::vec3 forward = glm::normalize(glm::vec3(tmodel[2])) * glm::vec3(1, 1, -1);
+			const glm::vec3 position = transform.getPosition();
 			view = glm::lookAt(
-				transform.getPosition(),
-				forward,
+				position,
+				position + forward,
 				glm::vec3(0.0f, -1.0f, 0.0f));
 		}
 	};

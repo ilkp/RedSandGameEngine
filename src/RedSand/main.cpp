@@ -32,7 +32,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 	game->mesh = game->entityManager.next();
 
 	Transform cameraTransform;
-	cameraTransform.setPosition(0, 0, 50);
+	cameraTransform.setPosition(0, 0, -10);
+	//cameraTransform.rotate(glm::radians(180.0), glm::vec3(0, 1, 0));
 	game->transformStore.set(game->camera, cameraTransform);
 
 	Camera camera;
@@ -41,23 +42,30 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 		glm::radians(45.0f),
 		(float)game->width / game->height,
 		0.1f,
-		100.0f);
+		1000.0f);
 	camera.applyTransform(cameraTransform);
 	game->cameraStore.set(game->camera, camera);
 
 	Mesh mesh;
-	mesh.vertices.push_back(Vertex{ .position = { -10, -10, 0 }, .color = { 1, 0, 0, 1 } });
-	mesh.vertices.push_back(Vertex{ .position = { 0, 10, 0 }, .color = { 0, 1, 0, 1 } });
-	mesh.vertices.push_back(Vertex{ .position = { 10, -10, 0 }, .color = { 0, 0, 1, 1 } });
-	mesh.indices = { 0, 1, 2 };
+	mesh.vertices.push_back(Vertex{ .position = { 10, -5, 0 }, .color = { 1, 0, 0, 1 } });
+	mesh.vertices.push_back(Vertex{ .position = { 0, 5, 0 }, .color = { 0, 1, 0, 1 } });
+	mesh.vertices.push_back(Vertex{ .position = { -10, -5, 0 }, .color = { 0, 0, 1, 1 } });
+	mesh.vertices.push_back(Vertex{ .position = { 0, 0, 10 }, .color = { 0, 1, 1, 1 } });
+	mesh.indices = {
+		0, 1, 2,
+		3, 1, 0,
+		3, 2, 1,
+		3, 0, 2
+	};
 	game->meshStore.set(game->mesh, mesh);
 
 	Transform transform;
-	transform.setPosition(-10, 0, 0);
+	transform.setPosition(0, 0, 200);
 	game->transformStore.set(game->mesh, transform);
 
 	Transform transform2;
-	transform2.setPosition(10, 0, 0);
+	transform2.setPosition(0, 0, -200);
+	transform2.rotate(glm::radians(180.0f), glm::vec3(1, 0, 0));
 	game->transformStore.set(game->mesh2, transform2);
 
 	if (!SDL_CreateWindowAndRenderer("RedSandGame", game->width, game->height, 0, &game->window, &game->renderer))
@@ -73,11 +81,24 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 	Key a = Input::instance().getKey(SDLK_A);
 	Key s = Input::instance().getKey(SDLK_S);
 	Key d = Input::instance().getKey(SDLK_D);
+	Key space = Input::instance().getKey(SDLK_SPACE);
+	Key lctrl = Input::instance().getKey(SDLK_LCTRL);
 
 	RedSandGame* game = static_cast<RedSandGame*>(appstate);
 
 	Transform cameraTransform = game->transformStore.get(game->camera);
-	cameraTransform.rotate(0.001f, glm::vec3(0, 1, 0));
+	const float tm = 0.01f;
+	if (w.direction == KeyDirection::down)
+		cameraTransform.translate(tm * cameraTransform.forward());
+	else if (s.direction == KeyDirection::down)
+		cameraTransform.translate(-tm * cameraTransform.forward());
+	if (a.direction == KeyDirection::down)
+		cameraTransform.rotate(-0.1 * tm, glm::vec3(0, 1, 0));
+	else if (d.direction == KeyDirection::down)
+		cameraTransform.rotate(0.1 * tm, glm::vec3(0, 1, 0));
+	cameraTransform.translate(0, space.direction == KeyDirection::down ? tm : 0.0f, 0);
+	cameraTransform.translate(0, lctrl.direction == KeyDirection::down ? -tm : 0.0f, 0);
+	//cameraTransform.rotate(0.0001f, glm::vec3(0, 1, 0));
 	game->transformStore.set(game->camera, cameraTransform);
 
 	Camera camera = game->cameraStore.get(game->camera);

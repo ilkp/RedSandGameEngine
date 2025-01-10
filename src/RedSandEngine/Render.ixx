@@ -3,6 +3,7 @@ module;
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 export module RedSandEngine:Render;
 
 import :RseTypes;
@@ -25,25 +26,52 @@ export namespace rse
 		const Mesh& mesh,
 		const std::vector<Transform>& transforms)
 	{
-		std::vector<SDL_Vertex> projectedVertices(mesh.vertices.size());
-		for (size_t i = 0; i < mesh.vertices.size(); ++i)
-		{
-			projectedVertices[i].color = mesh.vertices.at(i).color;
-			projectedVertices[i].tex_coord = mesh.vertices.at(i).tex_coord;
-		}
+		std::vector<glm::vec3> projectedPositions(mesh.vertices.size());
+		std::vector<SDL_Vertex> projectedSdlVertices(mesh.vertices.size());
 		for (const Transform& transform : transforms)
 		{
 			const glm::mat4 modelViewMatrix = camera.view * transform.position * glm::mat4_cast(transform.quaternion) * transform.scale;
 			for (size_t i = 0; i < mesh.vertices.size(); ++i)
 			{
-				const glm::vec3 projectedPosition = glm::project(
+				projectedPositions[i] = glm::project(
 					mesh.vertices[i].position,
 					modelViewMatrix,
 					camera.projection,
 					camera.viewport);
-				projectedVertices[i].position = { .x = projectedPosition.x, .y = projectedPosition.y };
+				projectedSdlVertices[i].position = { .x = projectedPositions.at(i).x, .y = projectedPositions.at(i).y };
+				projectedSdlVertices[i].color = mesh.vertices.at(i).color;
+				projectedSdlVertices[i].tex_coord = mesh.vertices.at(i).tex_coord;
 			}
-			SDL_RenderGeometry(&renderer, nullptr, projectedVertices.data(), projectedVertices.size(), mesh.indices.data(), mesh.indices.size());
+
+			std::vector<int> clippedIndices;
+			for (size_t i = 0; i < mesh.indices.size(); i = i + 3)
+			{
+				const glm::vec3& p1 = projectedPositions.at(mesh.indices.at(i));
+				const glm::vec3& p2 = projectedPositions.at(mesh.indices.at(i + 1));
+				const glm::vec3& p3 = projectedPositions.at(mesh.indices.at(i + 2));
+
+				if (p1.z < 1.0f || p2.z < 1.0f || p3.z < 1.0f)
+					continue;
+
+				const glm::vec3 normal = glm::cross(
+					p3 - p1,
+					p2 - p1
+				);
+
+				const bool facingCamera = glm::dot(p1, normal) < 0;
+				if (!facingCamera)
+					continue;
+
+				clippedIndices.push_back(mesh.indices.at(i));
+				clippedIndices.push_back(mesh.indices.at(i + 1));
+				clippedIndices.push_back(mesh.indices.at(i + 2));
+			}
+
+			SDL_RenderGeometry(
+				&renderer,
+				nullptr,
+				projectedSdlVertices.data(), projectedSdlVertices.size(),
+				clippedIndices.data(), clippedIndices.size());
 		}
 	}
 
