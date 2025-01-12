@@ -1,8 +1,8 @@
 module;
+#include <glm/glm.hpp>
 #include <algorithm>
 #include <functional>
 #include <iostream>
-#include <SDL3/SDL_mouse.h>
 module RedSandEngine:Input;
 
 import :RseContext;
@@ -36,20 +36,25 @@ namespace rse
 		));
 	}
 
-	Key rse::Input::getKey(SDL_Keycode keycode)
+	Key Input::getKey(SDL_Keycode keycode) const
 	{
-		const auto& current = _keyMap.current();
+		const auto& current = _keyMap.ccurrent();
 		if (current.count(keycode) == 0)
 			return Key{ .direction = KeyDirection::up, .status = KeyStatus::held };
 		return current.at(keycode);
 	}
 
-	Key Input::getMouseButton(MouseButton button)
+	Key Input::getMouseButton(MouseButton button) const
 	{
-		const auto& current = _mouseMap.current();
+		const auto& current = _mouseMap.ccurrent();
 		if (current.count(button) == 0)
 			return Key{ .direction = KeyDirection::up, .status = KeyStatus::held };
 		return current.at(button);
+	}
+
+	glm::vec2 Input::getMousePosition() const
+	{
+		return _mousePosition;
 	}
 
 	void Input::updateKeyboardMaps()
@@ -117,6 +122,8 @@ namespace rse
 
 	void Input::onSdlMouseMotionEvent(SDL_Event* event)
 	{
+		_mousePosition.x = event->motion.x;
+		_mousePosition.y = event->motion.y;
 	}
 
 	void Input::onSdlIterate()
