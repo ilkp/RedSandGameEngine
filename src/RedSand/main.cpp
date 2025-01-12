@@ -60,11 +60,11 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 	game->meshStore.set(game->mesh, mesh);
 
 	Transform transform;
-	transform.setPosition(0, 0, 200);
+	transform.setPosition(0, 0, 20);
 	game->transformStore.set(game->mesh, transform);
 
 	Transform transform2;
-	transform2.setPosition(0, 0, -200);
+	transform2.setPosition(0, 0, -20);
 	transform2.rotate(glm::radians(180.0f), glm::vec3(1, 0, 0));
 	game->transformStore.set(game->mesh2, transform2);
 
